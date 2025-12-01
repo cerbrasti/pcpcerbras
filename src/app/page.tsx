@@ -1,65 +1,122 @@
-import Image from "next/image";
+'use client';
+import 'primereact/resources/themes/lara-light-green/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
+import React, { useState, useRef, useEffect } from 'react';
+import { Card } from 'primereact/card';
+import { InputText } from 'primereact/inputtext';
+import { Checkbox } from 'primereact/checkbox';
+import { Button } from 'primereact/button';
+import { TypewriterEffect } from '@/app/components/ui/typewriter-effect';
+import { FloatLabel } from 'primereact/floatlabel';
+import { Toast } from 'primereact/toast';
+import { useRouter } from 'next/navigation';
+import Welcome from './components/internalBoard';
+import { logarAction } from './actions/auth';
 
-export default function Home() {
+
+export default function LoginDesktop() {
+  const [usuario, setUsuario] = useState('')
+  const [senha, setSenha] = useState('')
+  const [loading, setLoading] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [errors, setErrors] = useState<{ usuario?: string, senha?: string }>({});
+  const [lembrarUsuario, setLembrarUsuario] = useState(false);
+  const toast = useRef<Toast>(null);
+  const router = useRouter();
+  useEffect(() => {
+    if (localStorage.getItem('usuario')) {
+      setUsuario(localStorage.getItem('usuario') || '');
+      setLembrarUsuario(true);
+    }
+
+
+  }, [])
+
+  const logar = async () => {
+    const newError: { usuario?: string; senha?: string } = {};
+    if (!usuario) newError.usuario = "Usuário é obrigatório";
+    if (!senha) newError.senha = "Senha é obrigatória";
+
+    if (Object.keys(newError).length > 0) {
+      setErrors(newError);
+      return;
+    }
+
+    setErrors({});
+    const result = await logarAction(usuario, senha);
+    if (!result?.success) {
+      const msg = result?.message || "Falha ao fazer login.";
+      setErrors({ usuario: msg, senha: msg });
+    }
+    window.location.href = '/home';
+
+
+  };
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <div className='relative h-screen w-screen overflow-hidden'>
+      <Toast ref={toast} />
+      <div className='z-10 absolute w-[400px]'>
+        <Card className='h-screen relative  flex flex-col justify-center items-center ' onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => { if (e.key === 'Enter') { logar() } }}>
+          <TypewriterEffect words={[
+            { text: 'Login', className: 'text-green-500 text-4xl' },
+          ]}
+            className='' />
+
+          <div className='mt-6'>
+            <FloatLabel>
+              <InputText
+                id='usuario'
+                type='text'
+                value={usuario}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsuario(e.target.value)}
+                style={{
+                  borderColor: errors?.usuario ? 'red' : ''
+                }}
+                className='w-full' />
+              <label htmlFor='usuario'>Informe seu usuário</label>
+            </FloatLabel>
+          </div>
+
+          <div className='mt-6 w-full relative'>
+            <FloatLabel>
+              <InputText
+                id='senha'
+                type={mostrarSenha ? 'text' : 'password'}
+                value={senha}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSenha(e.target.value)}
+                className='w-full pr-10'
+                style={{
+                  paddingRight: '2.5rem',
+                  borderColor: errors?.senha ? 'red' : ''
+                }} />
+              <label htmlFor='senha'>Informe sua senha</label>
+            </FloatLabel>
+            <i className={`pi ${mostrarSenha ? 'pi-eye-slash' : 'pi-eye'} absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer`}
+              onClick={() => setMostrarSenha((prev) => !prev)}
+              style={{
+                fontSize: '1.2rem',
+                color: '#666',
+                pointerEvents: 'auto', // garante clique
+                zIndex: 10 // se tiver overlay
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+          </div>
+
+          <div className='mt-6 flex justify-center w-full'>
+            <Button
+              label={loading ? 'Acessando...' : 'Acessar'}
+              icon={loading ? 'pi pi-spin pi-spinner' : 'pi pi-sign-in'}
+              severity='success'
+              className='w-full'
+              onClick={() => { logar() }}
+              disabled={loading} />
+          </div>
+        </Card>
+      </div>
+      <div className='pl-[400px] h-full'>
+        <Welcome />
+      </div>
     </div>
-  );
+  )
 }
