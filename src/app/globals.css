@@ -1,5 +1,8 @@
-@import "tailwindcss";
 
+@import "tailwindcss";
+@import 'primereact/resources/themes/lara-dark-green/theme.css';
+@import 'primereact/resources/primereact.min.css';
+@import 'primeicons/primeicons.css';
 :root {
   --background: #ffffff;
   --foreground: #171717;

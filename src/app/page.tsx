@@ -12,8 +12,8 @@ import { FloatLabel } from 'primereact/floatlabel';
 import { Toast } from 'primereact/toast';
 import { useRouter } from 'next/navigation';
 import Welcome from './components/internalBoard';
-import { logarAction } from './actions/auth';
-
+import { AutenticarUsuario } from './actions/auth';
+import { PrimeReactProvider } from 'primereact/api';
 
 export default function LoginDesktop() {
   const [usuario, setUsuario] = useState('')
@@ -44,9 +44,9 @@ export default function LoginDesktop() {
     }
 
     setErrors({});
-    const result = await logarAction(usuario, senha);
-    if (!result?.success) {
-      const msg = result?.message || "Falha ao fazer login.";
+    const result = await AutenticarUsuario(usuario, senha);
+    if (!result) {
+      const msg = result || "Falha ao fazer login.";
       setErrors({ usuario: msg, senha: msg });
     }
     window.location.href = '/home';
@@ -54,69 +54,71 @@ export default function LoginDesktop() {
 
   };
   return (
-    <div className='relative h-screen w-screen overflow-hidden'>
-      <Toast ref={toast} />
-      <div className='z-10 absolute w-[400px]'>
-        <Card className='h-screen relative  flex flex-col justify-center items-center ' onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => { if (e.key === 'Enter') { logar() } }}>
-          <TypewriterEffect words={[
-            { text: 'Login', className: 'text-green-500 text-4xl' },
-          ]}
-            className='' />
+    <PrimeReactProvider value={{ ripple: true}}>
+      <div className='relative h-screen w-screen overflow-hidden'>
+        <Toast ref={toast} />
+        <div className='z-10 absolute w-[400px]'>
+          <Card className='h-screen relative  flex flex-col justify-center items-center ' onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => { if (e.key === 'Enter') { logar() } }}>
+            <TypewriterEffect words={[
+              { text: 'Login', className: 'text-green-500 text-4xl' },
+            ]}
+              className='' />
 
-          <div className='mt-6'>
-            <FloatLabel>
-              <InputText
-                id='usuario'
-                type='text'
-                value={usuario}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsuario(e.target.value)}
+            <div className='mt-6'>
+              <FloatLabel>
+                <InputText
+                  id='usuario'
+                  type='text'
+                  value={usuario}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsuario(e.target.value)}
+                  style={{
+                    borderColor: errors?.usuario ? 'red' : ''
+                  }}
+                  className='w-full' />
+                <label htmlFor='usuario'>Informe seu usuário</label>
+              </FloatLabel>
+            </div>
+
+            <div className='mt-6 w-full relative'>
+              <FloatLabel>
+                <InputText
+                  id='senha'
+                  type={mostrarSenha ? 'text' : 'password'}
+                  value={senha}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSenha(e.target.value)}
+                  className='w-full pr-10'
+                  style={{
+                    paddingRight: '2.5rem',
+                    borderColor: errors?.senha ? 'red' : ''
+                  }} />
+                <label htmlFor='senha'>Informe sua senha</label>
+              </FloatLabel>
+              <i className={`pi ${mostrarSenha ? 'pi-eye-slash' : 'pi-eye'} absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer`}
+                onClick={() => setMostrarSenha((prev) => !prev)}
                 style={{
-                  borderColor: errors?.usuario ? 'red' : ''
+                  fontSize: '1.2rem',
+                  color: '#666',
+                  pointerEvents: 'auto', // garante clique
+                  zIndex: 10 // se tiver overlay
                 }}
-                className='w-full' />
-              <label htmlFor='usuario'>Informe seu usuário</label>
-            </FloatLabel>
-          </div>
+              />
+            </div>
 
-          <div className='mt-6 w-full relative'>
-            <FloatLabel>
-              <InputText
-                id='senha'
-                type={mostrarSenha ? 'text' : 'password'}
-                value={senha}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSenha(e.target.value)}
-                className='w-full pr-10'
-                style={{
-                  paddingRight: '2.5rem',
-                  borderColor: errors?.senha ? 'red' : ''
-                }} />
-              <label htmlFor='senha'>Informe sua senha</label>
-            </FloatLabel>
-            <i className={`pi ${mostrarSenha ? 'pi-eye-slash' : 'pi-eye'} absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer`}
-              onClick={() => setMostrarSenha((prev) => !prev)}
-              style={{
-                fontSize: '1.2rem',
-                color: '#666',
-                pointerEvents: 'auto', // garante clique
-                zIndex: 10 // se tiver overlay
-              }}
-            />
-          </div>
-
-          <div className='mt-6 flex justify-center w-full'>
-            <Button
-              label={loading ? 'Acessando...' : 'Acessar'}
-              icon={loading ? 'pi pi-spin pi-spinner' : 'pi pi-sign-in'}
-              severity='success'
-              className='w-full'
-              onClick={() => { logar() }}
-              disabled={loading} />
-          </div>
-        </Card>
+            <div className='mt-6 flex justify-center w-full'>
+              <Button
+                label={loading ? 'Acessando...' : 'Acessar'}
+                icon={loading ? 'pi pi-spin pi-spinner' : 'pi pi-sign-in'}
+                severity='success'
+                className='w-full'
+                onClick={() => { logar() }}
+                disabled={loading} />
+            </div>
+          </Card>
+        </div>
+        <div className='pl-[400px] h-full'>
+          <Welcome />
+        </div>
       </div>
-      <div className='pl-[400px] h-full'>
-        <Welcome />
-      </div>
-    </div>
+    </PrimeReactProvider>
   )
 }
