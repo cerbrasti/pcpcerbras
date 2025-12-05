@@ -1,11 +1,12 @@
 export type grupoLinhaProducao = {
     ID: number | null;
     NOME_GRUPO_PRODUTOS: string;
+    DESCRICAO: string | null;
     LINHA: number;
     PRODUCAO_DIARIA: number;
     ATIVO: boolean | null;
-    USUARIO_CRIACAO: string | null;
-    DATA_CRIACAO: Date | null;
-    USUARIO_ALTERACAO: string | null;
-    DATA_ALTERACAO: Date | null;
+    CRIADAO_POR: string | null;
+    CRIADAO_EM: Date | null;
+    ALTERADO_POR: string | null;
+    ALTERADO_EM: Date | null;
 }

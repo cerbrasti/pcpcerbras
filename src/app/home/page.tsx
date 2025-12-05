@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { DataTable } from 'primereact/datatable';
@@ -16,6 +16,7 @@ import type { Linhas } from '../types/Linhas';
 import type { grupoLinhaProducao } from '../types/grupoLinhaProducao';
 import * as API from '@/app/actions/api'
 import { PrimeReactProvider } from 'primereact/api';
+import { Toast } from 'primereact/toast';
 
 type OrdemProducao = {
     id: string;
@@ -129,6 +130,7 @@ function getStatusLabel(status: OrdemProducao['status']) {
 }
 
 export default function Home() {
+    const toast = useRef<Toast>(null)
     const oeeGeral = 78;
     const planosCumpridos = 68;
     const eficienciaTurno = 84;
@@ -145,11 +147,16 @@ export default function Home() {
         setLinhas(getLinhas)
     }
     const [producaoDiaria, setProducaoDiaria] = useState<number | null>()
-    const [cadastroLinhaProducao, setCadastroLinhaProducao] = useState<grupoLinhaProducao | null>(null)
 
     const post_Cadastro = async () => {
-        if(!grupoDeProdutoSelecionado || !linhaSelecionada || !producaoDiaria){
-            return 
+        if (!grupoDeProdutoSelecionado || !linhaSelecionada || !producaoDiaria) {
+            toast.current?.show({
+                severity: 'warn',
+                summary: 'Aviso.',
+                detail: 'É necessário preencher todos os campos.',
+                life: 1500,
+            })
+            return
         }
 
         const payload: grupoLinhaProducao = {
@@ -157,21 +164,46 @@ export default function Home() {
             NOME_GRUPO_PRODUTOS: grupoDeProdutoSelecionado,
             LINHA: linhaSelecionada,
             PRODUCAO_DIARIA: producaoDiaria,
+            DESCRICAO: null,
             ATIVO: true,
-            USUARIO_CRIACAO: "teste",
-            DATA_CRIACAO: new Date(),
-            USUARIO_ALTERACAO: null,
-            DATA_ALTERACAO: null,
+            CRIADAO_POR: "teste",
+            CRIADAO_EM: new Date(),
+            ALTERADO_POR: null,
+            ALTERADO_EM: null,
         }
 
         const postCadastro = await API.postGrupoLinhaProducao(payload)
-        if(postCadastro){
-            alert('ENVIADO COM SUCESSO.')
+        if (postCadastro) {
+            toast.current?.show({
+                severity: 'success',
+                summary: 'Sucesso.',
+                detail: 'Planejamento cadastrado com sucesso.',
+                life: 1500,
+
+            })
+            setGrupoDeProdutoSelecionado('');
+            setLinhaSelecionada(null);
+            setProducaoDiaria(null);
+            setShowCadastroNovoPCP(false);
+            return
         }
     }
 
+    const [grupoLinhaProducao, setGrupoLinhaProducao] = useState<grupoLinhaProducao[]>([])
+    const [grupoLinhaProducaoSelecionado, setGrupoLinhaProducaoSelecionado] = useState<string>("")
+    const get_Info_Planejamento = async () => {
+        const getGrupoLinhaProducao = await API.getGrupoLinhaProducao()
+        setGrupoLinhaProducao(getGrupoLinhaProducao)
+
+    }
+    const lista = grupoLinhaProducao.map(item => ({
+        ...item,
+        LABEL_COMPLETO: `${item.DESCRICAO} — Qtd: ${item.PRODUCAO_DIARIA} — Linha: ${item.LINHA}`
+    }));
+    const [showProgramacaoProducao, setShowProgramacaoProducao] = useState<boolean>(false)
     return (
-        <PrimeReactProvider value={{ ripple: true}}> 
+        <PrimeReactProvider value={{ ripple: true }}>
+            <Toast ref={toast} />
             <div className="min-h-screen bg-neutral-900 text-neutral-100 p-6">
                 {/* HEADER */}
                 <div className="flex items-center justify-between mb-6">
@@ -375,8 +407,8 @@ export default function Home() {
                         >
                             <div className="flex flex-col gap-2">
                                 <Button
-                                    label="Planejar nova OP"
-                                    icon="pi pi-plus-circle"
+                                    label="Configuração"
+                                    icon="pi pi-cog"
                                     className="p-button-sm"
                                     onClick={() => {
                                         get_Info_Cadastro();
@@ -384,9 +416,13 @@ export default function Home() {
                                     }}
                                 />
                                 <Button
-                                    label="Reprogramar linha"
-                                    icon="pi pi-refresh"
+                                    label="Programar linha"
+                                    icon="pi pi-directions"
                                     className="p-button-sm p-button-secondary"
+                                    onClick={() => {
+                                        get_Info_Planejamento();
+                                        setShowProgramacaoProducao(true)
+                                    }}
                                 />
                                 <Button
                                     label="Relatório do turno"
@@ -402,7 +438,7 @@ export default function Home() {
                     onHide={() => setShowCadastroNovoPCP(false)}
                     visible={showCadastroNovoPCP}
                     pt={{ mask: { className: 'backdrop-blur-sm' } }}
-                    header={`Novo planejamento`}
+                    header={`Nova configuração`}
                 >
                     <div className='flex justify-center gap-3 p-2'>
                         <Dropdown
@@ -433,8 +469,8 @@ export default function Home() {
                             locale="pt-BR"
                             minFractionDigits={0}
                             maxFractionDigits={2}
-                            useGrouping={true}   
-                            
+                            useGrouping={true}
+
                         />
 
                     </div>
@@ -445,6 +481,27 @@ export default function Home() {
                             onClick={() => post_Cadastro()}
                         />
                     </div>
+                </Dialog>
+
+                <Dialog
+                    onHide={() => setShowProgramacaoProducao(false)}
+                    visible={showProgramacaoProducao}
+                    pt={{ mask: { className: 'backdrop-blur-sm' } }}
+                    header={`Novo planejamento`}>
+                    <div className='flex justify-center gap-2 p-2'>
+                        <Dropdown
+                            value={grupoLinhaProducaoSelecionado}
+                            options={lista}
+                            optionLabel='LABEL_COMPLETO'
+                            optionValue='ID'
+                            placeholder='Selecione uma configuração'
+                            onChange={(e: DropdownChangeEvent) => { setGrupoLinhaProducaoSelecionado(e.value) }}
+                            checkmark={true}
+                            highlightOnSelect={true}
+                            className='w-full md:w-56'
+                        />
+                    </div>
+
                 </Dialog>
             </div>
         </PrimeReactProvider>

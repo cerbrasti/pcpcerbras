@@ -37,3 +37,13 @@ export async function postGrupoLinhaProducao(glp: grupoLinhaProducao){
         throw new Error(`${err.response.data.message}`)
     }
 }
+
+
+export async function getGrupoLinhaProducao(): Promise<grupoLinhaProducao[]> {
+    try {
+        const response = await api.get('/grupoLinhaProducao')
+        return response.data
+    }catch(err: any /* eslint-disable-line @typescript-eslint/no-explicit-any */){
+        throw new Error(`${err.response.data.message}`)
+    }
+}
